@@ -1,0 +1,20 @@
+
+metadata:
+  name: mariadb
+  namespace: edf
+
+spec:
+  progressDeadlineSeconds: 400
+  replicas: 4
+
+spec:
+  containers:
+   - env:
+     - name: MYSQL_INITDB_SKIP_TZINFO
+        value: "1"
+      envFrom:
+      - secretRef:
+          name: mariadb-root-secret
+          optional: false
+      image: registry.ama.bzh:10001/amadev/thirdparties/mariadb:1.4.2
+      image: {{ docker.registry}}/thirdparties/{{ app }}:{{ version }}

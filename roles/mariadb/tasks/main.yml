@@ -1,9 +1,18 @@
 ---
+
+# This playbook assumes the following:
+#
+#   1. Your default ~/.kube/config points to a running Kubernetes cluster;
+#      otherwise set the K8S_AUTH_KUBECONFIG environment variable to the path to
+#      the correct kubeconfig).
+#
+#   2. You already have Helm and Ansible installed locally.
+
+
+
 - name: get database binding
   shell: get secrets -n {{ namespace }} -l mynamespace -o json
   register: bindingout
-
-
 
 - name: set database facts
   set_fact:
@@ -15,76 +24,68 @@
 
 
 
-- name: Install MariaDB
-  apt:
-    name: mariadb-server
+###############ADD REPO######
+
+- name: Add ama chart repo.
+  community.kubernetes.helm_repository:
+    name: ama
+    repo_url: "https://ama.github.io/ama-charts/"
+
+- name: Deploy mariadb Helm chart.
+  community.kubernetes.helm:
+    name: mariadb
+    chart_ref: ama/mariadb
+    chart_version: '2.0.7'
+    release_namespace: mariadb
     state: present
-    force: yes
-
-- hosts: localhost
-  gather_facts: false
-  vars:
-    test: 1
-  tasks:
-  - name: clone ELK repo
-    git:
-      repo: https://github.com/elastic/helm-charts.git
-      dest: ~/elk/repo
-      update: yes
-      
-  - name: Install MariaDB
-    apt:
-      name: mariadb-server
-      state: present
-      force: yes
-  
-  
-  
-  - name: "Download chart \"{{ chart.name }}\""
-    git:
-      repo: "{{ chart.git_repo }}"
-      dest: "{{ chart_path }}"
-    when: chart.state == 'present' and chart.git_repo is defined
-    changed_when: false
-  
-  
-
-  - name: install kibana
-    shell: |
-      #!/bin/bash
-      helm upgrade --install kibana ~/elk/repo/kibana -f ../elkvalues/kibana.yaml
-  
-  - name: filebeat installation
-    shell: |
-      #!/bin/bash
-      helm upgrade --install filebeat ~/elk/repo/filebeat -f ../elkvalues/filebeat.yaml
-  
-
-  - name: wait kibana be ready
-    shell: |
-      #!/bin/bash
-      kubectl get pods -l app=kibana | grep Running | grep -c '1/1'
-    register: kibana_ready
-    delay: 10
-    retries: 20
-    until: kibana_ready.stdout|int == 1
-  
-  - name: wait kibana service load balancer be ready
-    shell: |
-      #!/bin/bash
-      kubectl get service kibana-kibana | grep -c 'amazonaws.com'
-    register: kibana_service
-    delay: 10
-    retries: 20
-    until: kibana_service.stdout|int == 1
-  
-  - name: deploy logs application
-    shell: |
-      #!/bin/bash
-      kubectl apply -f ../application/deployment.yaml
+    values:
+      mariadb:
+        eula: true
 
 
+################CLONE REPO#######
 
+- name: clone ELK repo
+  git:
+    repo: https://ama.github.com/mariadb/helm-charts.git
+    dest: ~/mariadb/charts/repo
+    update: yes
+
+
+################# INSTALL  HELM ###########
+
+
+- name: "Install chart \"{{ chart.name }}\""
+  command: >
+    {{ helm_cmd }}
+    upgrade --install
+    --kubeconfig {{ kube_config }}
+    {{ kube_context }}
+    {{ chart_namespace }}
+    -f {{ chart_config}}
+    {{ chart_name }}
+    {{ chart_chart }}
+  when: chart.state == 'present'
+  register: chart_result
+  changed_when: chart_result.rc == 0
+
+- name: "Delete chart \"{{ chart.name }}\""
+  command: >
+    {{ helm_cmd }}
+    uninstall
+    --kubeconfig {{ kube_config}}
+    {{ kube_context }}
+    {{ chart_namespace }}
+    {{ chart_name }}
+  when: chart.state == 'absent' and chart_state.stdout == chart_name
+  register: chart_result
+  changed_when: chart_result.rc == 0
+ when: helm_version == "3"
+
+ 
+
+
+  
 
     
     
