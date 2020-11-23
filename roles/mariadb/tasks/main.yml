@@ -14,11 +14,7 @@
 
 - name: set database facts
   set_fact:
-    DB_HOST: "{{ bindingout.stdout | from_json ['DB_HOST'] | b64decode }}"
-    DB_USER: "{{ bindingout.stdout | from_json ['DB_USER'] | b64decode }}"
-    DB_PASSWORD: "{{ bindingout.stdout | from_json ['DB_PASSWORD'] | b64decode }}"
-    DB_NAME: "{{ bindingout.stdout | from_json ['DB_NAME'] | b64decode }}"
-    DB_PORT: "{{ bindingout.stdout | from_json ['DB_PORT'] | b64decode }}"
+    secret_mariadbpassword: "{{ bindingout.stdout | from_json ['DB_PASSWORD'] | b64decode }}"
 
 
 
@@ -34,11 +30,15 @@
 ################# INSTALL  HELM ###########
 
 - name: "Install chart "
-  command: 
-    {{ helm_cmd }}
-    install
+  command: {{ helm_cmd }} upgrade ${releaseName} project/helm/ \
+    --install \
     --kubeconfig {{ kube_config }}
-    -f {{ value_chart}} -f {{ override_chart }}
+    -f project/helm/values.yaml \
+    -f project/helm/values-{{ namespace }}.yaml \
+    -f project/helm/override-{{ namespace }}.yaml \
+    --set tag={{ version }} \
+    --set version={{ version }} \
+    -n {{ namespace }}
   when: chart.state == 'present'
 
  

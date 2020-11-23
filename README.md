@@ -31,11 +31,12 @@ Use an Ansible project to deploy all the production stack :
 
 ```
 - name: "Install chart "
-  command: helm install -f myvalues.yaml -f override.yaml ... [flags]
-```  
+  command: helm install -f myvalues.yaml -f override.yaml ... [flags]..
+```
 
 - In this case the priority will be given to the last (right-most) file specified
 - Deploy the new image into Kubernetes pods
+
 
 ## Using Ansible's Helm and Kube modules 
 - The helm_repository module adds the ama Helm repository, which contains the mariadab Helm chart. 

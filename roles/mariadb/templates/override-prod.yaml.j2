@@ -1,8 +1,6 @@
 
-metadata:
-  name: {{ metadataname }}
-  namespace: preprod
-
-spec:
-  progressDeadlineSeconds: 600
-  replicas: 3
+storageMariadb: 1Gi
+  
+global:
+  secret:
+    mariadbRootPassword: {{ secret_mariadbpassword }}

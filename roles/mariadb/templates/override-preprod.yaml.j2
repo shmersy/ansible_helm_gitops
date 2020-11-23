@@ -1,8 +1,6 @@
 
-metadata:
-  name: {{  metadataname }}
-  namespace: preprod
-
-spec:
-  progressDeadlineSeconds: 600
-  replicas: 2
+storageMariadb: 5Gi
+  
+global:
+  secret:
+    mariadbRootPassword: amine@rennes123

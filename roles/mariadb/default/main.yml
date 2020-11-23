@@ -1,6 +1,4 @@
 ---
 
 
-
-replicas: 1
-metadataname : mariadb
+secret_mariadbpassword: default
