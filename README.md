@@ -38,8 +38,14 @@ Use an Ansible project to deploy all the production stack :
 - Deploy the new image into Kubernetes pods
 
 ## Using Ansible's Helm and Kube modules 
-- The helm_repository module adds the ama Helm repository, which contains the mariadab 
-- Helm chart. The helm module deploys the chart and creates the mariadb pod on kubenetes.
+- The helm_repository module adds the ama Helm repository, which contains the mariadab Helm chart. 
+```
+- name: Add ama chart repo.
+  community.kubernetes.helm_repository:
+    name: ama
+    repo_url: "https://ama.github.io/ama-charts/"
+```
+- The helm module deploys the chart and creates the mariadb pod on kubenetes.
 
 ```
 - name: Deploy mariadb Helm chart.
@@ -52,3 +58,6 @@ Use an Ansible project to deploy all the production stack :
     values_files:
       - /path/to/values.yaml
       - /path/to/override.yaml
+```
+      
+This will permit to use full Ansible and so the version control.
