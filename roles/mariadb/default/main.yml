@@ -1,9 +1,6 @@
 ---
 
-metadata:
-  name: mariadb
-  namespace: preprod
 
-spec:
-  progressDeadlineSeconds: 600
-  replicas: 1
+
+replicas: 1
+metadataname : mariadb

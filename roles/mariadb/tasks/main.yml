@@ -3,15 +3,13 @@
 # This playbook assumes the following:
 #
 #   1. Your default ~/.kube/config points to a running Kubernetes cluster;
-#      otherwise set the K8S_AUTH_KUBECONFIG environment variable to the path to
-#      the correct kubeconfig).
 #
 #   2. You already have Helm and Ansible installed locally.
 
 
 
 - name: get database binding
-  shell: get secrets -n {{ namespace }} -l mynamespace -o json
+  shell: kubectl get secrets -n {{ namespace }} -l mynamespace -o json
   register: bindingout
 
 - name: set database facts
@@ -23,6 +21,27 @@
     DB_PORT: "{{ bindingout.stdout | from_json ['DB_PORT'] | b64decode }}"
 
 
+
+################CLONE REPO#######
+
+- name: clone chart repo
+  git:
+    repo: https://ama.github.com/mariadb/helm-charts.git
+    dest: ~/mariadb/charts/repo
+    update: yes
+
+
+################# INSTALL  HELM ###########
+
+- name: "Install chart "
+  command: 
+    {{ helm_cmd }}
+    install
+    --kubeconfig {{ kube_config }}
+    -f {{ value_chart}} -f {{ override_chart }}
+  when: chart.state == 'present'
+
+ 
 
 ###############ADD REPO######
 
@@ -38,53 +57,9 @@
     chart_version: '2.0.7'
     release_namespace: mariadb
     state: present
-    values:
-      mariadb:
-        eula: true
-
-
-################CLONE REPO#######
-
-- name: clone ELK repo
-  git:
-    repo: https://ama.github.com/mariadb/helm-charts.git
-    dest: ~/mariadb/charts/repo
-    update: yes
-
-
-################# INSTALL  HELM ###########
-
-
-- name: "Install chart \"{{ chart.name }}\""
-  command: >
-    {{ helm_cmd }}
-    upgrade --install
-    --kubeconfig {{ kube_config }}
-    {{ kube_context }}
-    {{ chart_namespace }}
-    -f {{ chart_config}}
-    {{ chart_name }}
-    {{ chart_chart }}
-  when: chart.state == 'present'
-  register: chart_result
-  changed_when: chart_result.rc == 0
-
-- name: "Delete chart \"{{ chart.name }}\""
-  command: >
-    {{ helm_cmd }}
-    uninstall
-    --kubeconfig {{ kube_config}}
-    {{ kube_context }}
-    {{ chart_namespace }}
-    {{ chart_name }}
-  when: chart.state == 'absent' and chart_state.stdout == chart_name
-  register: chart_result
-  changed_when: chart_result.rc == 0
- when: helm_version == "3"
-
- 
-
-
+    values_files:
+      - /path/to/values.yaml
+      - /path/to/override.yaml
   
 
     

@@ -1,7 +1,0 @@
-- name: "Check chart \"{{ chart.name | default('unknown') }}\" parameters"
-  assert:
-    that:
-    - chart.name is defined
-    - chart.name | length > 0
-    - chart.state is defined
-    - chart.state in ['present', 'absent']

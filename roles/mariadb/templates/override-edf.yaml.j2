@@ -1,0 +1,13 @@
+
+metadata:
+  name: {{  metadataname }}
+  namespace: edf
+
+spec:
+  progressDeadlineSeconds: 400
+  replicas: 4
+
+spec:
+  containers:
+   - env:
+      image: {{ docker.registry}}/thirdparties/{{ app }}:{{ version }}
